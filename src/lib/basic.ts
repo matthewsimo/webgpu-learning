@@ -1,7 +1,14 @@
 import vertTriangle from './shaders/vert.tri.wgsl?raw';
 import fragRed from './shaders/frag.red.wgsl?raw';
 
-export async function initWebGPU(canvas: HTMLCanvasElement) {
+type webGPUInit = {
+	device: GPUDevice;
+	context: GPUCanvasContext;
+	format: GPUTextureFormat;
+	size: { width: number; height: number };
+};
+
+export async function initWebGPU(canvas: HTMLCanvasElement): Promise<webGPUInit> {
 	if (!navigator.gpu) throw new Error('WebGPU unsupported');
 
 	const adapter = await navigator.gpu.requestAdapter({
@@ -10,10 +17,16 @@ export async function initWebGPU(canvas: HTMLCanvasElement) {
 
 	if (!adapter) throw new Error('No Adapter Found');
 
-	const adapterInfo = await adapter.requestAdapterInfo();
+	let adapterInfo;
+	if ('requestAdapterInfo' in adapter) {
+		0;
+		adapterInfo = await adapter.requestAdapterInfo();
+	}
 	const device = await adapter.requestDevice();
 	const context = canvas.getContext('webgpu') as GPUCanvasContext;
-	const format = navigator.gpu.getPreferredCanvasFormat();
+	const format = navigator.gpu.getPreferredCanvasFormat
+		? navigator.gpu.getPreferredCanvasFormat()
+		: context.getPreferredFormat(adapter);
 	const devicePixelRatio = window.devicePixelRatio || 1;
 	canvas.width = canvas.clientWidth * devicePixelRatio;
 	canvas.height = canvas.clientHeight * devicePixelRatio;
